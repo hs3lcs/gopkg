@@ -26,11 +26,11 @@ func init() {
 func main() {
 	// config
 	jwtExp, _ := strconv.Atoi(os.Getenv("JWT_EXP"))
-	crypto.Config = crypto.Cfg{
+	crypto.Config = &crypto.Cfg{
 		JWT_EXP: jwtExp,
 		JWT_KEY: os.Getenv("JWT_KEY"),
 	}
-	dbms.Config = dbms.Cfg{
+	dbms.Config = &dbms.Cfg{
 		MYSQL_RW_HOST: os.Getenv("MYSQL_RW_HOST"),
 		MYSQL_RW_USER: os.Getenv("MYSQL_RW_USER"),
 		MYSQL_RW_PASS: os.Getenv("MYSQL_RW_PASS"),

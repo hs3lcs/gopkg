@@ -14,4 +14,4 @@ type Cfg struct {
 	REDIS_PASS string
 }
 
-var Config Cfg
+var Config *Cfg

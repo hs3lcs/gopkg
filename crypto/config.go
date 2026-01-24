@@ -5,4 +5,4 @@ type Cfg struct {
 	JWT_KEY string // secret
 }
 
-var Config Cfg
+var Config *Cfg
