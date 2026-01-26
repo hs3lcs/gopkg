@@ -24,30 +24,46 @@ func init() {
 }
 
 func main() {
-	// config
-	jwtExp, _ := strconv.Atoi(os.Getenv("JWT_EXP"))
-	crypto.Config = &crypto.Cfg{
-		JWT_EXP: jwtExp,
-		JWT_KEY: os.Getenv("JWT_KEY"),
-	}
-	dbms.Config = &dbms.Cfg{
-		MYSQL_RW_HOST: os.Getenv("MYSQL_RW_HOST"),
-		MYSQL_RW_USER: os.Getenv("MYSQL_RW_USER"),
-		MYSQL_RW_PASS: os.Getenv("MYSQL_RW_PASS"),
-		MYSQL_RO_HOST: os.Getenv("MYSQL_RO_HOST"),
-		MYSQL_RO_USER: os.Getenv("MYSQL_RO_USER"),
-		MYSQL_RO_PASS: os.Getenv("MYSQL_RO_PASS"),
-		REDIS_HOST:    os.Getenv("REDIS_HOST"),
-		REDIS_PASS:    os.Getenv("REDIS_PASS"),
-	}
-	// dbms mysql
-	fmt.Println("- dbms mysql -")
-	db, err := dbms.Connect("RO")
+	dbmsTest()
+	cryptoTest()
+	// restapi
+	fmt.Println("- restapi -")
+	res, err := restapi.Call(restapi.ApiPack{
+		Url:    "https://wkrh.info/api/v1",
+		Method: "GET",
+	})
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	rows, err := db.Query("SHOW DATABASES")
+	fmt.Println(string(res))
+}
+
+func dbmsTest() {
+	db, err := dbms.Init(dbms.Config{
+		RWDB: dbms.DBCON{
+			HOST: os.Getenv("MYSQL_RW_HOST"),
+			USER: os.Getenv("MYSQL_RW_USER"),
+			PASS: os.Getenv("MYSQL_RW_PASS"),
+		},
+		RODB: dbms.DBCON{
+			HOST: os.Getenv("MYSQL_RO_HOST"),
+			USER: os.Getenv("MYSQL_RO_USER"),
+			PASS: os.Getenv("MYSQL_RO_PASS"),
+		},
+		REDIS: dbms.RDBCON{
+			DB:   1,
+			HOST: os.Getenv("REDIS_HOST"),
+			PASS: os.Getenv("REDIS_PASS"),
+		},
+	})
+	if err != nil {
+		fmt.Println("dbms init", err)
+		return
+	}
+	// dbms mysql
+	fmt.Println("- dbms mysql -")
+	rows, err := db.RO.Query("SHOW DATABASES")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -60,31 +76,33 @@ func main() {
 		}
 		fmt.Println(dbName)
 	}
-	// dbms redis
-	fmt.Println("- dbms redis -")
-	err = dbms.CacheSet("cache", "test cache", time.Minute*1)
+	// dbms cache
+	fmt.Println("- dbms cache -")
+	err = db.SetCache("test", "test cache", time.Minute*1)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	str, err := dbms.CacheGet("cache")
+	str, err := db.GetCache("test")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println("cache:", str)
-	// restapi
-	fmt.Println("- restapi -")
-	res, err := restapi.Call(restapi.ApiPack{
-		Url:    "https://wkrh.info/api/v1",
-		Method: "GET",
-	})
+	fmt.Println("test:", str)
+	all, err := db.GetAllCache()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(string(res))
-	// crypto
+	fmt.Println("all:", all)
+}
+
+func cryptoTest() {
+	jwtExp, _ := strconv.Atoi(os.Getenv("JWT_EXP"))
+	crypto.Config = &crypto.Cfg{
+		JWT_EXP: jwtExp,
+		JWT_KEY: os.Getenv("JWT_KEY"),
+	}
 	fmt.Println("- crypto -")
 	token, err := crypto.JwtEncode(crypto.JwtPack{})
 	if err != nil {

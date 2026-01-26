@@ -12,24 +12,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type JwtPack struct {
-	ISS  string `json:"iss"`
-	IAT  int64  `json:"iat"`
-	EXP  int64  `json:"exp"`
-	AGCY uint32 `json:"agcy"`
-	ACCT uint32 `json:"acct"`
-	Type uint8  `json:"type"`
-	Role uint8  `json:"role"`
-}
-
 func JwtEncode(jwtpack JwtPack) (string, error) {
 	exp := time.Duration(Config.JWT_EXP) * time.Minute
 	claims := jwt.MapClaims{
 		"iss":  "iamsvc",
 		"iat":  time.Now().Unix(),
 		"exp":  time.Now().Add(exp).Unix(),
-		"agcy": jwtpack.AGCY,
-		"acct": jwtpack.ACCT,
+		"uid":  jwtpack.UID,
+		"org":  jwtpack.ORG,
 		"type": jwtpack.Type,
 		"role": jwtpack.Role,
 	}
@@ -77,17 +67,15 @@ func JwtParse(token string) JwtPack {
 	return jwtpack
 }
 
-func HashPassword(pass string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(pass), 12)
+func HashPassword(pass string, cost int) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(pass), cost)
 	return string(bytes), err
 }
 
-func ComparePassword(hash, pass string) bool {
+func ComparePassword(hash string, pass string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(pass))
 	return err == nil
 }
-
-const CHAR_HASH = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func HashString(n uint8) string {
 	b := make([]byte, n)
