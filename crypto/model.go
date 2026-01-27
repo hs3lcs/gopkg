@@ -13,7 +13,7 @@ type JwtPack struct {
 const CHAR_HASH string = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 type Cfg struct {
-	JWT_EXP int    // minute
+	JWT_EXP int    // second
 	JWT_KEY string // secret
 }
 

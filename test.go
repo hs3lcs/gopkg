@@ -116,5 +116,6 @@ func cryptoTest() {
 	}
 	fmt.Printf("%+v\n", jwt)
 	fmt.Printf("%+v\n", crypto.JwtParse(token))
+	fmt.Println("expires_in:", crypto.Config.JWT_EXP)
 	fmt.Println(crypto.HashString(32))
 }

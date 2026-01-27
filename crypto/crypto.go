@@ -13,7 +13,7 @@ import (
 )
 
 func JwtEncode(jwtpack JwtPack) (string, error) {
-	exp := time.Duration(Config.JWT_EXP) * time.Minute
+	exp := time.Duration(Config.JWT_EXP) * time.Second
 	claims := jwt.MapClaims{
 		"iss":  "iamsvc",
 		"iat":  time.Now().Unix(),
