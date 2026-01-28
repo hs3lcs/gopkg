@@ -1,9 +1,12 @@
 package crypto
 
 import (
+	"crypto/md5"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/rand/v2"
 	"strings"
 	"time"
@@ -12,7 +15,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func JwtEncode(jwtpack JwtPack) (string, error) {
+func JwtEncode(jwtpack *JwtClaims) (string, error) {
 	exp := time.Duration(Config.JWT_EXP) * time.Second
 	claims := jwt.MapClaims{
 		"iss":  "iamsvc",
@@ -24,20 +27,22 @@ func JwtEncode(jwtpack JwtPack) (string, error) {
 		"role": jwtpack.Role,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, err := token.SignedString([]byte(Config.JWT_KEY))
+	secretKey := MD5Hash(Config.JWT_KEY)
+	tokenString, err := token.SignedString([]byte(secretKey))
 	if err != nil {
 		return "", err
 	}
-	return tokenStr, nil
+	return tokenString, nil
 }
 
-func JwtDecode(token string) (JwtPack, error) {
-	var jwtpack JwtPack
+func JwtDecode(token string) (*JwtClaims, error) {
+	jwtpack := new(JwtClaims)
 	jwtToken, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
-		return []byte(Config.JWT_KEY), nil
+		secretKey := MD5Hash(Config.JWT_KEY)
+		return []byte(secretKey), nil
 	})
 	if err != nil {
 		return jwtpack, err
@@ -53,8 +58,8 @@ func JwtDecode(token string) (JwtPack, error) {
 	return jwtpack, errors.New("invalid token")
 }
 
-func JwtParse(token string) JwtPack {
-	var jwtpack JwtPack
+func JwtParse(token string) *JwtClaims {
+	jwtpack := new(JwtClaims)
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
 		return jwtpack
@@ -77,10 +82,20 @@ func ComparePassword(hash string, pass string) bool {
 	return err == nil
 }
 
-func HashString(n uint8) string {
+func StringHash(n uint8) string {
 	b := make([]byte, n)
 	for i := range b {
 		b[i] = CHAR_HASH[rand.IntN(len(CHAR_HASH))]
 	}
 	return string(b)
+}
+
+func SHA256Hash(str string) string {
+	hash := sha256.Sum256([]byte(str))
+	return fmt.Sprintf("%x", hash)
+}
+
+func MD5Hash(str string) string {
+	hash := md5.Sum([]byte(str))
+	return fmt.Sprintf("%x", hash)
 }

@@ -42,14 +42,14 @@ func main() {
 func dbmsTest() {
 	db, err := dbms.Init(dbms.Config{
 		RWDB: dbms.DBCON{
-			HOST: os.Getenv("MYSQL_RW_HOST"),
-			USER: os.Getenv("MYSQL_RW_USER"),
-			PASS: os.Getenv("MYSQL_RW_PASS"),
+			HOST: os.Getenv("RWDB_HOST"),
+			USER: os.Getenv("RWDB_USER"),
+			PASS: os.Getenv("RWDB_PASS"),
 		},
 		RODB: dbms.DBCON{
-			HOST: os.Getenv("MYSQL_RO_HOST"),
-			USER: os.Getenv("MYSQL_RO_USER"),
-			PASS: os.Getenv("MYSQL_RO_PASS"),
+			HOST: os.Getenv("RODB_HOST"),
+			USER: os.Getenv("RODB_USER"),
+			PASS: os.Getenv("RODB_PASS"),
 		},
 		REDIS: dbms.RDBCON{
 			DB:   1,
@@ -104,7 +104,7 @@ func cryptoTest() {
 		JWT_KEY: os.Getenv("JWT_KEY"),
 	}
 	fmt.Println("- crypto -")
-	token, err := crypto.JwtEncode(crypto.JwtPack{})
+	token, err := crypto.JwtEncode(&crypto.JwtClaims{})
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -116,6 +116,7 @@ func cryptoTest() {
 	}
 	fmt.Printf("%+v\n", jwt)
 	fmt.Printf("%+v\n", crypto.JwtParse(token))
-	fmt.Println("expires_in:", crypto.Config.JWT_EXP)
-	fmt.Println(crypto.HashString(32))
+	fmt.Println("STR:", crypto.StringHash(32))
+	fmt.Println("MD5:", crypto.MD5Hash("123456"))
+	fmt.Println("SHA:", crypto.SHA256Hash("123456"))
 }

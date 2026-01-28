@@ -1,6 +1,6 @@
 package crypto
 
-type JwtPack struct {
+type JwtClaims struct {
 	ISS  string `json:"iss"`
 	IAT  int64  `json:"iat"`
 	EXP  int64  `json:"exp"`
