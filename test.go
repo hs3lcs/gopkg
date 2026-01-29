@@ -28,7 +28,7 @@ func main() {
 	cryptoTest()
 	// restapi
 	fmt.Println("- restapi -")
-	res, err := restapi.Call(restapi.ApiPack{
+	res, err := restapi.Call(&restapi.ApiPack{
 		Url:    "https://wkrh.info/api/v1",
 		Method: "GET",
 	})
@@ -40,18 +40,18 @@ func main() {
 }
 
 func dbmsTest() {
-	db, err := dbms.Init(dbms.Config{
-		RWDB: dbms.DBCON{
+	db, err := dbms.Init(&dbms.Config{
+		RWDB: &dbms.DBCON{
 			HOST: os.Getenv("RWDB_HOST"),
 			USER: os.Getenv("RWDB_USER"),
 			PASS: os.Getenv("RWDB_PASS"),
 		},
-		RODB: dbms.DBCON{
+		RODB: &dbms.DBCON{
 			HOST: os.Getenv("RODB_HOST"),
 			USER: os.Getenv("RODB_USER"),
 			PASS: os.Getenv("RODB_PASS"),
 		},
-		REDIS: dbms.RDBCON{
+		REDIS: &dbms.RDBCON{
 			DB:   1,
 			HOST: os.Getenv("REDIS_HOST"),
 			PASS: os.Getenv("REDIS_PASS"),
@@ -104,7 +104,7 @@ func cryptoTest() {
 		JWT_KEY: os.Getenv("JWT_KEY"),
 	}
 	fmt.Println("- crypto -")
-	token, err := crypto.JwtEncode(&crypto.JwtClaims{})
+	token, err := crypto.JwtEncode(&crypto.JwtClaims{ISS: "iamsvc"})
 	if err != nil {
 		fmt.Println(err)
 		return

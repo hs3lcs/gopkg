@@ -18,7 +18,7 @@ type DBClient struct {
 
 var ctx = context.Background()
 
-func Init(cfg Config) (*DBClient, error) {
+func Init(cfg *Config) (*DBClient, error) {
 	// Master (RW)
 	rwCfg := mysql.Config{
 		Net:    "tcp",

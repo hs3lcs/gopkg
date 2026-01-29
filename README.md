@@ -1,19 +1,4 @@
 ## Go Package
-### crypto
-- JwtEncode
-- JwtDecode
-- JwtParse
-- HashPassword
-- ComparePassword
-- HashString
-### dbms
-- mysql
-    - Connect
-    - Transaction
-- redis
-    - CacheSet
-    - CacheGet
-    - CacheDel
-    - CacheGetAll
-### restapi
-- Call
+- 💥crypto
+- 💥dbms
+- 💥restapi

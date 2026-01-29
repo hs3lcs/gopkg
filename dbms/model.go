@@ -13,7 +13,7 @@ type RDBCON struct {
 }
 
 type Config struct {
-	RWDB  DBCON
-	RODB  DBCON
-	REDIS RDBCON
+	RWDB  *DBCON
+	RODB  *DBCON
+	REDIS *RDBCON
 }

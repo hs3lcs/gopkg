@@ -16,18 +16,18 @@ type ApiPack struct {
 	Body   any    `json:"body"`
 }
 
-func Call(payload ApiPack) ([]byte, error) {
+func Call(api *ApiPack) ([]byte, error) {
 	client := &http.Client{Timeout: time.Second * 10}
-	body, _ := json.Marshal(payload.Body)
+	body, _ := json.Marshal(api.Body)
 	req, err := http.NewRequest(
-		payload.Method,
-		payload.Url,
+		api.Method,
+		api.Url,
 		bytes.NewBuffer(body),
 	)
 	if err != nil {
 		return nil, err
 	}
-	authToken := "Bearer " + payload.Token
+	authToken := "Bearer " + api.Token
 	req.Header.Set("authorization", authToken)
 	req.Header.Set("content-type", "application/json; charset=utf-8")
 	rsp, err := client.Do(req)

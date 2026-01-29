@@ -15,16 +15,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func JwtEncode(jwtpack *JwtClaims) (string, error) {
+func JwtEncode(jwtClaims *JwtClaims) (string, error) {
 	exp := time.Duration(Config.JWT_EXP) * time.Second
 	claims := jwt.MapClaims{
-		"iss":  "iamsvc",
+		"iss":  jwtClaims.ISS,
 		"iat":  time.Now().Unix(),
 		"exp":  time.Now().Add(exp).Unix(),
-		"uid":  jwtpack.UID,
-		"org":  jwtpack.ORG,
-		"type": jwtpack.Type,
-		"role": jwtpack.Role,
+		"uid":  jwtClaims.UID,
+		"org":  jwtClaims.ORG,
+		"type": jwtClaims.Type,
+		"role": jwtClaims.Role,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	secretKey := MD5Hash(Config.JWT_KEY)
@@ -36,7 +36,6 @@ func JwtEncode(jwtpack *JwtClaims) (string, error) {
 }
 
 func JwtDecode(token string) (*JwtClaims, error) {
-	jwtpack := new(JwtClaims)
 	jwtToken, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
@@ -45,30 +44,31 @@ func JwtDecode(token string) (*JwtClaims, error) {
 		return []byte(secretKey), nil
 	})
 	if err != nil {
-		return jwtpack, err
+		return nil, err
 	}
 	if claims, ok := jwtToken.Claims.(jwt.MapClaims); ok && jwtToken.Valid {
 		str, err := json.Marshal(claims)
 		if err != nil {
-			return jwtpack, err
+			return nil, err
 		}
-		err = json.Unmarshal(str, &jwtpack)
+		jwtpack := new(JwtClaims)
+		err = json.Unmarshal(str, jwtpack)
 		return jwtpack, err
 	}
-	return jwtpack, errors.New("invalid token")
+	return nil, errors.New("invalid token")
 }
 
 func JwtParse(token string) *JwtClaims {
-	jwtpack := new(JwtClaims)
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
-		return jwtpack
+		return nil
 	}
 	decoded, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		return jwtpack
+		return nil
 	}
-	json.Unmarshal(decoded, &jwtpack)
+	jwtpack := new(JwtClaims)
+	json.Unmarshal(decoded, jwtpack)
 	return jwtpack
 }
 
