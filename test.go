@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/hs3lcs/gopkg/crypto"
@@ -13,6 +12,14 @@ import (
 	"github.com/hs3lcs/gopkg/restapi"
 	"github.com/joho/godotenv"
 )
+
+type JwtClaims struct {
+	ISS string `json:"iss"`
+	IAT int64  `json:"iat"`
+	EXP int64  `json:"exp"`
+}
+
+var secret string = "123456"
 
 func init() {
 	envFile := flag.String("e", ".env", "env file")
@@ -98,24 +105,24 @@ func dbmsTest() {
 }
 
 func cryptoTest() {
-	jwtExp, _ := strconv.Atoi(os.Getenv("JWT_EXP"))
-	crypto.Config = &crypto.Cfg{
-		JWT_EXP: jwtExp,
-		JWT_KEY: os.Getenv("JWT_KEY"),
-	}
 	fmt.Println("- crypto -")
-	token, err := crypto.JwtEncode(&crypto.JwtClaims{ISS: "iamsvc"})
+	claims := map[string]any{
+		"iss": "iamsvc",
+		"iat": time.Now().Unix(),
+		"exp": time.Now().Add(time.Hour).Unix(),
+	}
+	token, err := crypto.JwtEncode(claims, secret)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	jwt, err := crypto.JwtDecode(token)
+	jwt, err := crypto.JwtDecode[JwtClaims](token, secret)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	fmt.Printf("%+v\n", jwt)
-	fmt.Printf("%+v\n", crypto.JwtParse(token))
+	fmt.Printf("%+v\n", crypto.JwtParse[JwtClaims](token))
 	fmt.Println("STR:", crypto.StringHash(32))
 	fmt.Println("MD5:", crypto.MD5Hash("123456"))
 	fmt.Println("SHA:", crypto.SHA256Hash("123456"))

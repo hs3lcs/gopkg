@@ -9,67 +9,56 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"strings"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func JwtEncode(jwtClaims *JwtClaims) (string, error) {
-	exp := time.Duration(Config.JWT_EXP) * time.Second
-	claims := jwt.MapClaims{
-		"iss":  jwtClaims.ISS,
-		"iat":  time.Now().Unix(),
-		"exp":  time.Now().Add(exp).Unix(),
-		"uid":  jwtClaims.UID,
-		"org":  jwtClaims.ORG,
-		"type": jwtClaims.Type,
-		"role": jwtClaims.Role,
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	secretKey := MD5Hash(Config.JWT_KEY)
-	tokenString, err := token.SignedString([]byte(secretKey))
+func JwtEncode(claims map[string]any, secret string) (string, error) {
+	jwtToken := jwt.NewWithClaims(
+		jwt.SigningMethodHS256,
+		jwt.MapClaims(claims),
+	)
+	token, err := jwtToken.SignedString([]byte(secret))
 	if err != nil {
 		return "", err
 	}
-	return tokenString, nil
+	return token, nil
 }
 
-func JwtDecode(token string) (*JwtClaims, error) {
+func JwtDecode[T any](token string, secret string) (T, error) {
+	var result T
 	jwtToken, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
-		secretKey := MD5Hash(Config.JWT_KEY)
-		return []byte(secretKey), nil
+		return []byte(secret), nil
 	})
-	if err != nil {
-		return nil, err
+	if err != nil || !jwtToken.Valid {
+		return result, fmt.Errorf("invalid token: %w", err)
 	}
-	if claims, ok := jwtToken.Claims.(jwt.MapClaims); ok && jwtToken.Valid {
-		str, err := json.Marshal(claims)
-		if err != nil {
-			return nil, err
+	if claims, ok := jwtToken.Claims.(jwt.MapClaims); ok {
+		bytes, _ := json.Marshal(claims)
+		if err := json.Unmarshal(bytes, &result); err != nil {
+			return result, err
 		}
-		jwtpack := new(JwtClaims)
-		err = json.Unmarshal(str, jwtpack)
-		return jwtpack, err
+		return result, nil
 	}
-	return nil, errors.New("invalid token")
+	return result, errors.New("failed to cast claims")
 }
 
-func JwtParse(token string) *JwtClaims {
+func JwtParse[T any](token string) T {
+	var result T
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
-		return nil
+		return result
 	}
 	decoded, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		return nil
+		return result
 	}
-	jwtpack := new(JwtClaims)
-	json.Unmarshal(decoded, jwtpack)
-	return jwtpack
+	json.Unmarshal(decoded, &result)
+	return result
 }
 
 func HashPassword(pass string, cost int) (string, error) {
@@ -81,6 +70,8 @@ func ComparePassword(hash string, pass string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(pass))
 	return err == nil
 }
+
+const CHAR_HASH string = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func StringHash(n uint8) string {
 	b := make([]byte, n)
