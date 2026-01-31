@@ -14,10 +14,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func JwtEncode(claims map[string]any, secret string) (string, error) {
+func JwtEncode(claims any, secret string) (string, error) {
+	var mapJwt map[string]any
+	bytes, _ := json.Marshal(claims)
+	if err := json.Unmarshal(bytes, &mapJwt); err != nil {
+		return "", err
+	}
 	jwtToken := jwt.NewWithClaims(
 		jwt.SigningMethodHS256,
-		jwt.MapClaims(claims),
+		jwt.MapClaims(mapJwt),
 	)
 	token, err := jwtToken.SignedString([]byte(secret))
 	if err != nil {

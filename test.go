@@ -17,6 +17,8 @@ type JwtClaims struct {
 	ISS string `json:"iss"`
 	IAT int64  `json:"iat"`
 	EXP int64  `json:"exp"`
+	UID uint32 `json:"uid"`
+	ORG uint16 `json:"org"`
 }
 
 var secret string = "123456"
@@ -106,10 +108,12 @@ func dbmsTest() {
 
 func cryptoTest() {
 	fmt.Println("- crypto -")
-	claims := map[string]any{
-		"iss": "iamsvc",
-		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(time.Hour).Unix(),
+	claims := &JwtClaims{
+		ISS: "iamsvc",
+		IAT: time.Now().Unix(),
+		EXP: time.Now().Add(time.Hour).Unix(),
+		UID: 55,
+		ORG: 88,
 	}
 	token, err := crypto.JwtEncode(claims, secret)
 	if err != nil {
