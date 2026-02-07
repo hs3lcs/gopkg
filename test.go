@@ -87,23 +87,31 @@ func dbmsTest() {
 	}
 	// dbms cache
 	fmt.Println("- dbms cache -")
-	err = db.SetCache("test", "test cache", time.Minute*1)
+	var inCache, outCache JwtClaims
+	inCache.ISS = "cache"
+	inCache.IAT = 3600
+	// set
+	err = db.SetCache("test", &inCache, time.Minute*1)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	str, err := db.GetCache("test")
+	// get
+	err = db.GetCache("test", &outCache)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println("test:", str)
-	all, err := db.GetAllCache()
+	// del
+	db.DelCache("test")
+	// get keys
+	keys, err := db.GetCacheKeys()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println("all:", all)
+	fmt.Printf("get: %+v\n", outCache)
+	fmt.Printf("key: %+v\n", keys)
 }
 
 func cryptoTest() {

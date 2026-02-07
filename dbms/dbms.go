@@ -3,6 +3,7 @@ package dbms
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -66,17 +67,25 @@ func Init(cfg *Config) (*DBClient, error) {
 }
 
 func (d *DBClient) SetCache(key string, value any, expire time.Duration) error {
-	return d.Cache.Set(ctx, key, value, expire).Err()
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	return d.Cache.Set(ctx, key, data, expire).Err()
 }
 
-func (d *DBClient) GetCache(key string) (string, error) {
-	return d.Cache.Get(ctx, key).Result()
+func (d *DBClient) GetCache(key string, target any) error {
+	val, err := d.Cache.Get(ctx, key).Result()
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal([]byte(val), target)
 }
 
 func (d *DBClient) DelCache(key string) error {
 	return d.Cache.Del(ctx, key).Err()
 }
 
-func (d *DBClient) GetAllCache() (any, error) {
+func (d *DBClient) GetCacheKeys() (any, error) {
 	return d.Cache.Do(ctx, "KEYS", "*").Result()
 }
