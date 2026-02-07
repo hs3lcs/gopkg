@@ -12,32 +12,42 @@ import (
 type ApiPack struct {
 	Url    string `json:"url"`
 	Method string `json:"method"`
-	Token  string `json:"token"`
-	Body   any    `json:"body"`
+	Token  string `json:"token,omitempty"`
+	Body   any    `json:"body,omitempty"`
 }
 
 func Call(api *ApiPack) ([]byte, error) {
-	client := &http.Client{Timeout: time.Second * 10}
-	body, _ := json.Marshal(api.Body)
-	req, err := http.NewRequest(
-		api.Method,
-		api.Url,
-		bytes.NewBuffer(body),
-	)
+	// body
+	var bodyReader io.Reader
+	if api.Body != nil {
+		jsonBody, err := json.Marshal(api.Body)
+		if err != nil {
+			return nil, err
+		}
+		bodyReader = bytes.NewBuffer(jsonBody)
+	}
+	// request
+	req, err := http.NewRequest(api.Method, api.Url, bodyReader)
 	if err != nil {
 		return nil, err
 	}
-	authToken := "Bearer " + api.Token
-	req.Header.Set("authorization", authToken)
-	req.Header.Set("content-type", "application/json; charset=utf-8")
+	// header
+	if api.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+api.Token)
+	}
+	if api.Body != nil {
+		req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	}
+	// client
+	client := &http.Client{Timeout: time.Second * 10}
 	rsp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer rsp.Body.Close()
-	if rsp.StatusCode != http.StatusOK {
+	// response
+	if rsp.StatusCode >= 400 {
 		return nil, errors.New(rsp.Status)
 	}
-	resBody, err := io.ReadAll(rsp.Body)
-	return resBody, err
+	return io.ReadAll(rsp.Body)
 }
